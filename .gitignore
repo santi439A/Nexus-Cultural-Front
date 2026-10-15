@@ -1,0 +1,17 @@
+# Flutter y Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugin-dependencies
+.packages
+build/
+
+# Android
+android/.gradle/
+android/captures/
+android/app/debug/
+android/app/release/
+
+# IDEs
+.idea/
+.vscode/
+*.iml

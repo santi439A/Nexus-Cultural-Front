@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
@@ -16,9 +17,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
+  int _resendCountdown = 0;
+  Timer? _countdownTimer;
+
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    setState(() => _resendCountdown = 30);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_resendCountdown > 1) {
+        setState(() => _resendCountdown--);
+      } else {
+        setState(() => _resendCountdown = 0);
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _emailController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -32,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (mounted) {
       if (success) {
+        _startCountdown();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.emeraldGreen,
@@ -69,7 +91,13 @@ class _LoginScreenState extends State<LoginScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        if (authController.isAdmin) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/home-admin', (route) => false);
+        } else if (authController.isArtisan) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/home-artisan', (route) => false);
+        } else {
+          Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        }
       } else if (authController.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -258,9 +286,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           TextButton.icon(
-                            icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('Reenviar código'),
-                            onPressed: authController.isLoading ? null : _onSolicitarOtp,
+                            icon: Icon(_resendCountdown > 0 ? Icons.timer_outlined : Icons.refresh, size: 18),
+                            label: Text(_resendCountdown > 0
+                                ? 'Reenviar (${_resendCountdown}s)'
+                                : 'Reenviar código'),
+                            onPressed: (authController.isLoading || _resendCountdown > 0) ? null : _onSolicitarOtp,
                           ),
                           const SizedBox(width: 8),
                           TextButton.icon(

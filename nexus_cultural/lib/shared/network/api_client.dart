@@ -1,5 +1,5 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+// lib/shared/network/api_client.dart
+
 import 'package:dio/dio.dart';
 import 'auth_interceptor.dart';
 
@@ -9,20 +9,16 @@ class ApiClient {
 
   late final Dio _dio;
 
-  // Determina la URL base según la plataforma
+  // URL del servidor desplegado en AWS
+  static const String _awsUrl = 'http://nexus-cultural-aws.us-east-1.elasticbeanstalk.com/api';
+
+  // Determina la URL base activa
   static String get defaultBaseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080/api';
-    }
-    try {
-      if (Platform.isAndroid) {
-        // En emulador de Android, 10.0.2.2 apunta al localhost de la máquina anfitrión
-        return 'http://10.0.2.2:8080/api';
-      }
-    } catch (_) {
-      // Fallback para plataformas no compatibles con dart:io
-    }
-    return 'http://localhost:8080/api';
+    // Permite sobreescribir la URL en tiempo de ejecución mediante: --dart-define=API_URL=https://...
+    const customUrl = String.fromEnvironment('API_URL');
+    if (customUrl.isNotEmpty) return customUrl;
+
+    return _awsUrl;
   }
 
   ApiClient._internal() {
@@ -54,19 +50,19 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    return await _dio.get(path, queryParameters: queryParameters);
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options}) async {
+    return await _dio.get(path, queryParameters: queryParameters, options: options);
   }
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await _dio.post(path, data: data, queryParameters: queryParameters);
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    return await _dio.post(path, data: data, queryParameters: queryParameters, options: options);
   }
 
-  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await _dio.put(path, data: data, queryParameters: queryParameters);
+  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    return await _dio.put(path, data: data, queryParameters: queryParameters, options: options);
   }
 
-  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await _dio.delete(path, data: data, queryParameters: queryParameters);
+  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    return await _dio.delete(path, data: data, queryParameters: queryParameters, options: options);
   }
 }
